@@ -31,6 +31,9 @@ use external_multiple_structure;
 use external_single_structure;
 use external_value;
 use invalid_parameter_exception;
+use SimpleXMLElement;
+use SimpleXMLIterator;
+use tool_lp\external;
 use XMLWriter;
 
 defined('MOODLE_INTERNAL') || die;
@@ -149,37 +152,94 @@ class xml_format extends abstract_format implements format {
      * @param $result
      * @param external_description $description
      * @param string|null $key
+     *
+     * @return void
+     *
+     * @throws coding_exception
      */
     protected function to_xml(XMLWriter $doc, $result, external_description $description, $key=null) {
-        $singlekey = $key ?? 'value';
+        $key = $key ?? 'value';
 
         if ($description instanceof external_value) {
             switch ($description->type) {
                 case PARAM_BOOL:
-                    $doc->startElement($singlekey);
+                    $doc->startElement($key);
                     $doc->text($result ? 'true' : 'false');
                     $doc->endElement();
                     break;
                 default:
-                    $doc->startElement($singlekey);
+                    $doc->startElement($key);
                     $doc->text($result);
                     $doc->endElement();
             }
         } elseif ($description instanceof external_single_structure) {
-            $doc->startElement($singlekey);
-            foreach ($description->keys as $singlekey => $keydescription) {
-                $this->to_xml($doc, $result[$singlekey], $keydescription, $singlekey);
+            $doc->startElement($key);
+            foreach ($description->keys as $key => $keydescription) {
+                $this->to_xml($doc, $result[$key], $keydescription, $key);
             }
             $doc->endElement();
         } elseif ($description instanceof external_multiple_structure) {
-            $doc->startElement($singlekey);
+            $doc->startElement($key);
             foreach ($result as $resultitem) {
-                $this->to_xml($doc, $resultitem, $description->content, $singlekey);
+                $this->to_xml($doc, $resultitem, $description->content, $key);
             }
             $doc->endElement();
         } else {
             throw new coding_exception(sprintf(
                     'unknown external_description type %s', get_class($description)));
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function never_transform_parameters($parameters, external_description $description) {
+        /** @var SimpleXMLElement $parameters */
+
+        if ($description instanceof external_value) {
+            return $parameters;
+        } elseif ($description instanceof external_single_structure) {
+            $values = [];
+            foreach ($parameters->children() as $rawvalue) {
+                $value = [];
+                $rawchildren = $rawvalue->children();
+                foreach ($description->keys as $key => $keydescription) {
+                    $value[$key] = $rawvalue->{$key};
+                    $values[] = $this->transform_parameters($value, $keydescription);
+                }
+            }
+
+            return $values;
+        } elseif ($description instanceof external_multiple_structure) {
+            foreach ($parameters->children() as $index => $rawvalue) {
+                xdebug_break();
+            }
+        }
+
+        //if ($description instanceof external_single_structure) {
+        //    foreach ($description->keys as $key => $keydescription) {
+        //        if ($keydescription instanceof external_single_structure
+        //                || $keydescription instanceof external_multiple_structure)
+        //            $this->transform_parameters($parameters[$key], $keydescription);
+        //    }
+        //} elseif ($description instanceof external_multiple_structure) {
+        //    $values = [];
+        //    foreach ($parameters as $key => &$nestedparameters) {
+        //        if (is_array($nestedparameters)) {
+        //            foreach ($nestedparameters as &$value) {
+        //                $this->transform_parameters($value, $description->content);
+        //                $values[] = $value;
+        //            }
+        //            unset($parameters[$key]);
+        //        }
+        //    }
+        //    if (count($values)) {
+        //        foreach ($values as $value) {
+        //            $parameters[] = $value;
+        //        }
+        //    } else {
+        //        $parameters = array_values($parameters);
+        //    }
+        //}
     }
 }

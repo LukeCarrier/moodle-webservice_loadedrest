@@ -132,8 +132,11 @@ class webservice_loadedrest_server_testcase extends advanced_testcase {
             ->with($inputfile->getContent())
             ->willReturn(['vfsStream' => 'life saver']);
         $mockformat->expects($this->at(2))
-            ->method('send_headers');
+            ->method('transform_parameters')
+            ->with(['vfsStream' => 'life saver']);
         $mockformat->expects($this->at(3))
+            ->method('send_headers');
+        $mockformat->expects($this->at(4))
             ->method('send_response');
 
         $server = new webservice_loadedrest_server_mock($mockformat, $inputfile->url());

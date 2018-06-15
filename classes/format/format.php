@@ -62,6 +62,21 @@ interface format {
     public function deserialise($body);
 
     /**
+     * Transform parameters to match the description.
+     *
+     * Parsers for some formats may need to post-process the parameters once
+     * the external function parameter information has been obtained from the
+     * external class, e.g. to restructure values around multiple/single
+     * structure definitions.
+     *
+     * @param mixed[] $parameters
+     * @param external_description $description
+     *
+     * @return mixed[]
+     */
+    public function transform_parameters($parameters, external_description $description);
+
+    /**
      * Send HTTP response headers.
      *
      * Headers, with the exception of the status line, are expected to be

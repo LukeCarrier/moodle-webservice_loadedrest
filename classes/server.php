@@ -187,6 +187,8 @@ class server extends webservice_base_server {
      * @inheritdoc
      */
     protected function execute() {
+        $this->parameters = $this->format->transform_parameters(
+                $this->parameters, $this->function->parameters_desc);
         parent::execute();
     }
 

@@ -136,4 +136,86 @@ class webservice_loadedrest_xml_format_testcase extends advanced_testcase {
             $this->assertRegExp($regexp, $output);
         }
     }
+
+    public function data_transform_parameters_fixes_multiple_tags() {
+        return [
+            [
+                'body' => '<?xml version="1.0" encoding="utf-8"?>
+                        <request>
+                            <duplicates>
+                                <duplicate>0</duplicate>
+                            </duplicates>
+                        </request>',
+                'description' => new external_function_parameters([
+                    'duplicates' => new external_multiple_structure(new external_value(
+                            PARAM_INT, '', VALUE_REQUIRED)),
+                ]),
+                'expected' => [
+                    'duplicates' => [0],
+                ]
+            ],
+            [
+                'body' => '<?xml version="1.0" encoding="utf-8"?>
+                        <request>
+                            <duplicates>
+                                <duplicate>0</duplicate>
+                                <duplicate>1</duplicate>
+                            </duplicates>
+                        </request>',
+                'description' => new external_function_parameters([
+                    'duplicates' => new external_multiple_structure(new external_value(
+                            PARAM_INT, '', VALUE_REQUIRED)),
+                ]),
+                'expected' => [
+                    'duplicates' => [0, 1],
+                ],
+            ],
+            [
+                'body' => '<?xml version="1.0" encoding="utf-8"?>
+                        <request>
+                            <duplicates>
+                                <duplicate>
+                                    <moreduplicates>
+                                        <moreduplicate>0</moreduplicate>
+                                        <moreduplicate>1</moreduplicate>
+                                    </moreduplicates>
+                                </duplicate>
+                                <duplicate>
+                                    <moreduplicates>
+                                        <moreduplicate>0</moreduplicate>
+                                        <moreduplicate>1</moreduplicate>
+                                    </moreduplicates>
+                                </duplicate>
+                            </duplicates>
+                        </request>',
+                'description' => new external_function_parameters([
+                    'duplicates' => new external_multiple_structure(new external_single_structure([
+                        'moreduplicates' => new external_multiple_structure(new external_value(
+                            PARAM_INT, '', VALUE_REQUIRED)),
+                    ])),
+                ]),
+                'expected' => [
+                    'duplicates' => [
+                        [
+                            'moreduplicates' => [0, 1],
+                        ],
+                        [
+                            'moreduplicates' => [0, 1],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider data_transform_parameters_fixes_multiple_tags
+     */
+    public function never_test_transform_parameters_fixes_multiple_tags($body, $description, $expected) {
+        $format = new xml_format();
+        $parameters = $format->parse_request_body($body);
+        $format->transform_parameters($parameters, $description);
+
+        $this->assertEquals($expected, $parameters);
+    }
 }

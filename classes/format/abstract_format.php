@@ -24,6 +24,8 @@
 
 namespace webservice_loadedrest\format;
 
+use external_description;
+
 defined('MOODLE_INTERNAL') || die;
 
 /**
@@ -32,6 +34,13 @@ defined('MOODLE_INTERNAL') || die;
  * Contains just enough logic
  */
 abstract class abstract_format implements format {
+    /**
+     * @inheritdoc
+     */
+    public function transform_parameters($parameters, external_description $description) {
+        return $parameters;
+    }
+
     /**
      * @inheritdoc
      */
