@@ -23,8 +23,11 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
-/** @var string[] $string */
 
-$string['pluginname'] = 'Loaded REST protocol';
-
-$string['loadedrest:use'] = 'Use Loaded REST protocol';
+$capabilities = [
+    'webservice/loadedrest:use' => [
+        'contextlevel' => CONTEXT_SYSTEM,
+        'captype' => 'read',
+        'archetypes' => [],
+    ],
+];
